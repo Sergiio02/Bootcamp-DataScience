@@ -187,4 +187,233 @@ where p."amount" > (select avg("amount")
 
 --si quisieramos el title juntariamos con otro join la tabla film 
 				
---28.
+--28. Muestra el id de los actores que hayan participado en más de 40 películas.
+
+select "actor_id"
+from "film_actor"
+group by "actor_id"
+having count("film_id") > 40;
+			
+--29. Obtener todas las películas y, si están disponibles en el inventario, mostrar la cantidad disponible.
+
+select f."film_id", f."title", count(i."film_id") as "quantity"
+from "film" as f
+	left join "inventory" as i 
+		on f."film_id" = i."film_id"
+group by f."film_id";				
+
+--30. Obtener los actores y el número de películas en las que ha actuado.
+
+select "actor_id", count("film_id")
+from "film_actor"
+group by "actor_id";
+
+--31. Obtener todas las películas y mostrar los actores que han actuado en ellas, incluso si algunas películas no tienen actores asociados.
+
+select f."film_id", f."title", fa."actor_id"
+from "film" as f
+	left join "film_actor" as fa
+		on f."film_id" = fa."film_id";
+
+	--Si queremos saber el numero de actores y no los nombres, podriamos hacer un count y agrupar para no tener peliculas repetidas:
+	
+select f."film_id", f."title",count(fa."actor_id")
+from "film" as f
+	left join "film_actor" as fa
+		on f."film_id" = fa."film_id"
+group by f."film_id";
+	
+
+--32. Obtener todos los actores y mostrar las películas en las que han actuado, incluso si algunos actores no han actuado en ninguna película.
+
+select a."actor_id", concat(a."first_name", ' ', a."last_name") as "Actor name", fa."film_id"
+from "actor" as a
+	left join "film_actor" as fa
+		on a."actor_id" = fa."actor_id";
+
+-- igual que antes, si queremos saber número de peliculas en vez de que peluculas y asi no repetir actor id y su nombre hacemos count y agrupamos:
+				
+select a."actor_id", concat(a."first_name", ' ', a."last_name") as "Actor name", count(fa."film_id")
+from "actor" as a
+	left join "film_actor" as fa
+		on a."actor_id" = fa."actor_id"
+group by  a."actor_id", "Actor name";
+				
+--33. Obtener todas las películas que tenemos y todos los registros de alquiler.
+
+select f."film_id", f."title", count(r."rental_id") as "Number of rentals"
+from "film" as f
+	left join "inventory" as i
+		on f."film_id" = i."film_id"
+	left join "rental" as r
+		on i."inventory_id" = r."inventory_id"
+group by f."film_id";				
+				
+--34. Encuentra los 5 clientes que más dinero se hayan gastado con nosotros.				
+				
+select c."customer_id", concat(c."first_name", ' ', c."last_name") as "Customer name", sum(p."amount") as "Money spent"
+from "customer" c 
+	inner join "payment" p 
+		on c."customer_id" = p."customer_id"
+group by c."customer_id"	
+order by "Money spent" desc		
+limit 5;				
+
+--35. Selecciona todos los actores cuyo primer nombre es 'Johnny'.
+
+select * 
+from "actor"
+where "first_name" = 'JOHNNY';
+
+--36. Renombra la columna “first_nameˮ como Nombre y “last_nameˮ como Apellido.
+				
+SELECT "first_name" AS "Nombre", "last_name" AS "Apellido"
+FROM "actor";
+
+--37. Encuentra el ID del actor más bajo y más alto en la tabla actor.
+
+select max("actor_id") as "maximum actor_id", min("actor_id") as "minimum actor_id"
+from "actor";
+
+--38. Cuenta cuántos actores hay en la tabla “actorˮ.
+				
+select count("actor_id") as	"number of actors"
+from "actor";
+				
+--39. Selecciona todos los actores y ordénalos por apellido en orden ascendente.
+
+select *
+from "actor"
+order by "last_name" asc;
+
+--40. Selecciona las primeras 5 películas de la tabla “filmˮ.
+				
+select *
+from "film"
+order by "film_id" asc
+limit 5;
+				
+--41. Agrupa los actores por su nombre y cuenta cuántos actores tienen el mismo nombre. ¿Cuál es el nombre más repetido?
+
+select "first_name", count("first_name" ) as "numbers of times"
+from "actor"
+group by "first_name" 
+order by "numbers of times" desc;		
+--nombre mas repetido es Kenneth, penelope y julia, los 3 salen 4 veces, podriamos hacer un limit 1 para ver solamente el mas repetido aunque no veriamos los empates
+				
+--42. Encuentra todos los alquileres y los nombres de los clientes que los realizaron.		
+
+select r."rental_id", concat(c."first_name", ' ', c."last_name") as "Customer name"
+from "rental" as r
+	inner join "customer" as c 
+		on r."customer_id" = c."customer_id";
+				
+
+--43. Muestra todos los clientes y sus alquileres si existen, incluyendo aquellos que no tienen alquileres.
+	
+select concat(c."first_name", ' ', c."last_name") as "Customer name", r."rental_id"
+from "customer" as c
+	left join "rental" as r
+		on c."customer_id" = r."customer_id";
+	
+--44. Realiza un CROSS JOIN entre las tablas film y category. ¿Aporta valor esta consulta? ¿Por qué? Deja después de la consulta la contestación.
+		
+select * 
+from "film" as f cross join "category" as c;
+
+--No aporta nada, al revés, ya que mezcla cada pelicula con todas las categorias existentes, cosa que no tienen ningun sentido
+
+--45. Encuentra los actores que han participado en películas de la categoría 'Action'.
+
+select "actor_id" 
+from "film_actor" 
+where "film_id" IN (select "film_id" 
+					from "film_category" 
+					where "category_id" IN (select "category_id"
+											from "category"
+											where "name" = 'Action'));			
+
+--opcion 2
+select "actor_id" 
+from "film_actor" 
+where "film_id" IN (select f."film_id" 
+					from "film_category" f inner join "category" c on f."category_id" = c."category_id"
+					where c."name" = 'Action');
+					
+--opcion 3
+WITH ActionFilms AS (
+    SELECT f."film_id"
+    FROM "film_category" f
+    	INNER JOIN "category" c ON f."category_id" = c."category_id"
+    WHERE c."name" = 'Action'
+)
+SELECT fa."actor_id"
+FROM "film_actor" fa
+WHERE fa."film_id" IN (SELECT "film_id" FROM ActionFilms);
+
+-- Cuál sería mejor usar? entiendo que la 1 es menos eficiente, y del resto solo lo diferenncia la forma en que se organiza y la legibilidad no? 				
+
+
+--46. Encuentra todos los actores que no han participado en películas.
+
+select "actor_id", concat("first_name", ' ', "last_name") as "Actor name"
+from "actor" 
+where "actor_id" not in (select "actor_id" from "film_actor");
+
+--47. Selecciona el nombre de los actores y la cantidad de películas en las que han participado
+
+select a."actor_id", concat(a."first_name", ' ', a."last_name") as "Actor name", count(fa."film_id") as "number of films"
+from "actor" as a
+	left join "film_actor" as fa
+		on a."actor_id" = fa."actor_id"
+group by  a."actor_id";
+		
+
+--48. Crea una vista llamada “actor_num_peliculasˮ que muestre los nombres de los actores y el número de películas en las que han participado.
+
+create view “actor_num_peliculasˮ as 
+select a."actor_id", concat(a."first_name", ' ', a."last_name") as "Actor name", count(fa."film_id") as "number of films"
+from "actor" as a
+	left join "film_actor" as fa
+		on a."actor_id" = fa."actor_id"
+group by  a."actor_id";
+
+--49. Calcula el número total de alquileres realizados por cada cliente.
+
+select c."customer_id", concat(c."first_name", ' ', c."last_name") as "Customer name", count(r."rental_id") as "number of rentals"
+from "customer" as c
+	left join "rental" as r
+		on c."customer_id" = r."customer_id"
+group by c."customer_id"
+order by "number of rentals" desc;
+
+--50. Calcula la duración total de las películas en la categoría 'Action'.
+WITH "ActionFilms" AS (
+    SELECT f."film_id"
+    FROM "film_category" f
+    	INNER JOIN "category" c ON f."category_id" = c."category_id"
+    WHERE c."name" = 'Action'
+)
+select sum("length") as "sum of durations"
+from "film"
+where "film_id" in (SELECT "film_id" FROM "ActionFilms");
+
+--51. Crea una tabla temporal llamada “cliente_rentas_temporalˮ para almacenar el total de alquileres por cliente.
+
+create temporary table “cliente_rentas_temporalˮ as
+select c."customer_id", concat(c."first_name", ' ', c."last_name") as "Customer name", count(r."rental_id") as "number of rentals"
+from "customer" as c
+	left join "rental" as r
+		on c."customer_id" = r."customer_id"
+group by c."customer_id"
+order by "number of rentals" desc;
+
+--52. Crea una tabla temporal llamada “peliculas_alquiladasˮ que almacene las películas que han sido alquiladas al menos 10 veces.
+
+
+
+
+
+
+
+
